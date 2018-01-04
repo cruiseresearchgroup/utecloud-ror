@@ -1,0 +1,60 @@
+
+<%= link_to("Back", { controller: "portal", action: "sessionlist" },
+            { :class=>"btn btn-md btn-info", :data => { :no_turbolink => 'data-no-turbolink' } }) %>
+
+<h1>Session: <%= @sessionNumber %></h1>
+ 
+ <style>
+  table, td {
+      border: 1px solid black;
+  }
+  
+  table{
+    border-spacing: 10px;
+      border-collapse: separate;
+  }
+  
+  td {
+    padding: 10px;
+  }
+ </style>
+<table>
+  <tr>
+    <th>Device ID</th>
+    <th>Device Type</th>
+    <th>Is Active</th>
+    <th>Connected At (UTC)</th>
+    <th>Connected At (Melbourne)</th>
+    <th>Sensors</th>
+  </tr>
+ 
+<% @sessionConnections.each do |sessionConnection| %>
+  <% _hasSensorInfo = sessionConnection.session_sensor_infos.exists? %>
+  <tr>
+    <td><%= sessionConnection.device_id %></td>
+    <td>
+      <% case sessionConnection.device_type 
+       when 1 %>
+        iOS
+      <% when 2 %>
+        Android
+      <% end %>
+  </td>
+    <td><%= sessionConnection.is_active %></td>
+    <td><%= sessionConnection.connected_at %></td>
+    <td><%= sessionConnection.connected_at.in_time_zone('Melbourne') %></td>
+    <td><%= _hasSensorInfo ? (link_to "CSV", controller: "portal", action: "sensorInfos", connectionId: sessionConnection.id) : '' %></td>
+  </tr>
+<% end %>
+</table>
+
+ 
+<br>
+
+
+<% content_for :head do %>
+  
+  <%# javascript_include_tag 'highcharts/highcharts' %>
+  <%# javascript_include_tag 'highcharts/modules/exporting' %>
+
+<% end %>

@@ -1,0 +1,213 @@
+<div id="wrapper">
+
+  <!-- Navigation -->
+  <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+      <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="<%= portal_experimentlist_path %>">UTE - My Portal</a>
+      </div>
+      <!-- /.navbar-header -->
+
+      <ul class="nav navbar-top-links navbar-right">
+          <!-- /.dropdown -->
+          <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                  <i class="fa fa-user fa-fw"></i>  <i class="fa fa-caret-down"></i>
+              </a>
+              <ul class="dropdown-menu dropdown-user">
+                  <!--<li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
+                  </li>
+                  <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a>
+                  </li>-->
+                  <li class="divider"></li>
+                  <li><a href="<%= users_logout_path %>"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
+                  </li>
+              </ul>
+              <!-- /.dropdown-user -->
+          </li>
+          <!-- /.dropdown -->
+      </ul>
+      <!-- /.navbar-top-links -->
+
+      <div class="navbar-default sidebar" role="navigation">
+          <div class="sidebar-nav navbar-collapse">
+              <ul class="nav" id="side-menu">
+                  <!--<li class="sidebar-search">
+                      <div class="input-group custom-search-form">
+                          <input type="text" class="form-control" placeholder="Search...">
+                          <span class="input-group-btn">
+                          <button class="btn btn-default" type="button">
+                              <i class="fa fa-search"></i>
+                          </button>
+                      </span>
+                      </div>-->
+                      <!-- /input-group -->
+                  <!--</li>-->
+                  <li class="active">
+                      <a data-no-turbolink="true" href="<%= portal_experimentlist_path %>"><i class="fa fa-table fa-fw"></i> Experiments</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-lightbulb-o fa-fw"></i> Analyse</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-cube fa-fw"></i> Simulate</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-bookmark fa-fw"></i> Integrate</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-area-chart fa-fw"></i> Visualise</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-archive fa-fw"></i> Archived</a>
+                  </li>
+              </ul>
+          </div>
+          <!-- /.sidebar-collapse -->
+      </div>
+      <!-- /.navbar-static-side -->
+  </nav>
+
+  <div id="page-wrapper">
+
+      <div class="container-fluid">
+
+        <!-- Page Heading -->
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header">
+                    <!--Listing of Recorded Sessions-->
+                </h1>
+                <ol class="breadcrumb">
+                    <li>
+                        <i class="fa fa-dashboard"></i> 
+                         <%= link_to("Experiments", { controller: "portal", action: "experimentlist" }, { :data => { :no_turbolink => true } }) %>
+                    </li>
+                    <li class="active">
+                        <i class="fa fa-table"></i> Experiment List
+                    </li>
+                </ol>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <div class="row">
+            <div class="col-lg-12">
+              <div>
+                <%= link_to("New Experiment", { controller: "portal", action: "newexperiment" },
+            { :class=>"btn btn-danger", :data => { :no_turbolink => true } }) %>
+              </div>
+              <div class="table-responsive">
+                  <table class="table table-bordered table-hover">
+                      <thead>
+                          <tr>
+                              <th>Experiment Code</th>
+                              <th>Title</th>
+                              <th>Description</th>
+                              <th>Is Private</th>
+                              <th>Is Active</th>
+                              <th>Created At</th>
+                              <th>Created By</th>
+                              <th>Owner</th>
+                              <th>Action</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <% @allExperiments.each do |experiment| %>
+                            <tr class="ute-row-ex-<%= experiment.id %>">
+                              <td><%= experiment.experiment_code %></td>
+                              <td><%= experiment.title %></td>
+                              <td><%= experiment.text %></td>
+                              <td><%= experiment.is_private ? "Yes" : "No" %></td>
+                              <td><%= experiment.is_active ? "Yes" : "No" %></td>
+                              <td><%= experiment.created_at.in_time_zone(session[:user_tz] || 'Melbourne') %></td>
+                              <td><%= session[:user_id] == experiment.created_by ? "Me" : UserAuthentication.find(experiment.created_by).username %></td>
+                              <td><%= session[:user_id] == experiment.created_by ? "Me" : UserAuthentication.find(experiment.owner).username %></td>
+                              <% has_exsession = experiment.ute_ex_sessions.count > 0 ? true : false %>
+                              <td>
+                                <% if experiment.owner == session[:user_id] %>
+                                  <input type="button" class="btn btn-danger btn-sm ute-btn-delete" data-remove-text=<%= has_exsession ? "Archive" : "Delete" %> data-ute-id="<%= experiment.id %>" value=<%= has_exsession ? "Archive" : "Delete" %> />
+                                <% end %>
+                                <!--<input type="button" class="btn btn-info btn-sm ute-btn-edit" data-ute-id="<%= experiment.id %>" value="edit" />-->
+                                <%= link_to("Edit", { controller: "portal", action: "editexperiment", id: experiment.id },
+            { :class=>"btn btn-info btn-sm ute-btn-edit", :data => { :no_turbolink => 'data-no-turbolink' } }) %>
+                                <%= link_to("Explore", { controller: "portal", action: "sessionconnectionlist", id: experiment.id },
+            { :class=>"btn btn-success btn-sm ute-btn-view", :data => { :no_turbolink => 'data-no-turbolink' } }) %>
+
+
+                              </td>
+                            </tr>
+                          <% end %>
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+        </div>
+        <!-- /.row -->
+
+    </div>
+    <!-- /.container-fluid -->
+
+  </div>
+  <!-- /#page-wrapper -->
+
+</div>
+<!-- /#wrapper -->
+
+<script type="application/javascript">
+  // setup delete confirmation modal
+  var onreadySetup = function() {
+    // Delete confirmation modals
+    $('.ute-btn-delete').on('click', function(e) {
+      e.preventDefault();
+      var thisobject = this;
+      var experimentId = $(thisobject).data('ute-id');
+      var removetext = $(thisobject).data('remove-text');      
+      $('#experiment-btn-remove').html(removetext);
+      $('#confirmremovemodal').modal({ backdrop: 'static', keyboard: false })
+                              .one('click', '#experiment-btn-remove', function() {
+                                //alert('ALERT');
+                                $.ajax({
+                                  url: '<%= portal_experiment_remove_path %>',
+                                  method: 'POST',
+                                  data: {
+                                    experiment_id: experimentId,
+                                  },
+                                  success: function(dataObject) {
+                                    if((dataObject != null || dataObject != undefined) && dataObject.success) {
+                                      $(".ute-row-ex-" + experimentId).remove();
+                                    }
+                                  }
+                                });
+                              });
+
+    });
+  }
+  onreadySetup();
+
+  /*$(document).ready(function(){
+    onreadySetup();
+  });*/
+</script>
+
+<div id="confirmremovemodal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        Are you sure?
+      </div>
+      <div class="modal-footer">
+        <button type="button" data-dismiss="modal" class="btn btn-primary" id="experiment-btn-remove">Any</button>
+        <button type="button" data-dismiss="modal" class="btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+ 
+<br>

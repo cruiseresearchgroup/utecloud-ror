@@ -1,0 +1,29 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Experiment code:</strong>
+  <%= @ute_experiment.experiment_code %>
+</p>
+
+<p>
+  <strong>Title:</strong>
+  <%= @ute_experiment.title %>
+</p>
+
+<p>
+  <strong>Text:</strong>
+  <%= @ute_experiment.text %>
+</p>
+
+<p>
+  <strong>Is private:</strong>
+  <%= @ute_experiment.is_private %>
+</p>
+
+<p>
+  <strong>Is active:</strong>
+  <%= @ute_experiment.is_active %>
+</p>
+
+<%= link_to 'Edit', edit_ute_experiment_path(@ute_experiment) %> |
+<%= link_to 'Back', ute_experiments_path %>

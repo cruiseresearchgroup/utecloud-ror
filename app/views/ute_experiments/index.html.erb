@@ -1,0 +1,35 @@
+<p id="notice"><%= notice %></p>
+
+<h1>Listing Ute Experiments</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Experiment code</th>
+      <th>Title</th>
+      <th>Text</th>
+      <th>Is private</th>
+      <th>Is active</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @ute_experiments.each do |ute_experiment| %>
+      <tr>
+        <td><%= ute_experiment.experiment_code %></td>
+        <td><%= ute_experiment.title %></td>
+        <td><%= ute_experiment.text %></td>
+        <td><%= ute_experiment.is_private %></td>
+        <td><%= ute_experiment.is_active %></td>
+        <td><%= link_to 'Show', ute_experiment %></td>
+        <td><%= link_to 'Edit', edit_ute_experiment_path(ute_experiment) %></td>
+        <td><%= link_to 'Destroy', ute_experiment, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Ute experiment', new_ute_experiment_path %>

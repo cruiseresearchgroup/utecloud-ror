@@ -1,0 +1,591 @@
+<div id="wrapper">
+
+  <!-- Navigation -->
+  <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+      <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/portal/sessionconnectioninfos">UTE - My Portal</a>
+      </div>
+      <!-- /.navbar-header -->
+
+      <ul class="nav navbar-top-links navbar-right">
+          <!-- /.dropdown -->
+          <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                  <i class="fa fa-user fa-fw"></i>  <i class="fa fa-caret-down"></i>
+              </a>
+              <ul class="dropdown-menu dropdown-user">
+                  <!--<li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
+                  </li>
+                  <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a>
+                  </li>-->
+                  <li class="divider"></li>
+                  <li><a href="<%= users_logout_path %>"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
+                  </li>
+              </ul>
+              <!-- /.dropdown-user -->
+          </li>
+          <!-- /.dropdown -->
+      </ul>
+      <!-- /.navbar-top-links -->
+
+      <div class="navbar-default sidebar" role="navigation">
+          <div class="sidebar-nav navbar-collapse">
+              <ul class="nav" id="side-menu">
+                  <!--<li class="sidebar-search">
+                      <div class="input-group custom-search-form">
+                          <input type="text" class="form-control" placeholder="Search...">
+                          <span class="input-group-btn">
+                          <button class="btn btn-default" type="button">
+                              <i class="fa fa-search"></i>
+                          </button>
+                      </span>
+                      </div>-->
+                      <!-- /input-group -->
+                  <!--</li>-->
+                  <li class="active">
+                      <a data-no-turbolink="true" href="<%= portal_experimentlist_path %>"><i class="fa fa-table fa-fw"></i> Experiments</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-lightbulb-o fa-fw"></i> Analyse</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-cube fa-fw"></i> Simulate</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-bookmark fa-fw"></i> Integrate</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-area-chart fa-fw"></i> Visualise</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-archive fa-fw"></i> Archived</a>
+                  </li>
+              </ul>
+          </div>
+          <!-- /.sidebar-collapse -->
+      </div>
+      <!-- /.navbar-static-side -->
+  </nav>
+
+  <div id="page-wrapper">
+
+      <div class="container-fluid">
+
+        <!-- Page Heading -->
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header">
+                    <!--Listing of Recorded Sessions-->
+                </h1>
+                <ol class="breadcrumb">
+                    <li>
+                        <i class="fa fa-dashboard"></i>  
+                        <%= link_to("Experiments", { controller: "portal", action: "experimentlist" }, { :data => { :no_turbolink => true } }) %>
+                    </li>
+                    <li class="active">
+                        <i class="fa fa-table"></i> Edit Experiment - <%= @experiment.experiment_code %>
+                    </li>
+                </ol>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <div class="row">
+            <div class="col-lg-12">
+              <div class="table-responsive">
+                  <%= form_for(@experiment, :url => {:controller => 'portal', :action => 'updateexperiment'}, :method => :post, :html => {:id => "editform", :class => "form-horizontal"}) do |f| %>
+                    <fieldset>
+                      <% if flash[:error] %>
+                        <div class="alert alert-danger alert-dismissable">
+                          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                          
+                          <%= content_tag :div, flash[:error], :id => "flash_error" %>
+
+                          <% if @user.errors.any? %>
+                            <% for message_error in @user.errors.full_messages %>
+                              <%= content_tag :div, message_error %>
+                            <% end %>
+                          <% end %>
+                        </div>
+                      <% end %>
+                        <%= f.hidden_field(:id) %>
+                        <div class="form-group">
+                          <%= f.label :title, class: 'col-md-2 control-label' %>
+                          <div class="col-md-10">
+                            <%= f.text_field(:title, class: "form-control", placeholder: "Experiment title", autofocus: "", :required => true) %>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <%= label_tag 'ute_experiment_talias', 'Alias', class: 'col-md-2 control-label' %>
+                          <div class="col-md-10">
+                            <%= f.text_field(:talias, class: "form-control", placeholder: "Experiment alias", autofocus: "") %>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <%= f.label :text, 'Description', class: 'col-md-2 control-label' %>
+                          <div class="col-md-10">
+                            <%= f.text_area(:text, class: "form-control", placeholder: "Description", rows: "5") %>
+                          </div>
+                        </div>
+
+                        <div class="form-group">
+                          <%= f.label :is_cacheable, 'Cacheable', class: 'col-md-2 control-label', "data-toggle": "tooltip", title: "allow offline data collection" %>
+                          <div class="col-md-10">
+                            <div class="checkbox">
+                              <label>
+                                <%= f.check_box(:is_cacheable) %>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="form-group">
+                          <%= label_tag 'sensors-settings', 'Sensor settings', class: 'col-md-2 control-label' %>
+                          <div class="col-md-10">
+                            <div class="checkbox">
+                              <div class="col-md-2">
+                                <label class="control-label">
+                                  <%# check_box_tag 'ute_experiment[settings][sensors][][name]', 'accelerometer', params[:settings] && params[:settings][:sensors] && params[:settings][:sensors][:name].include?('accelerometer'), onclick: "onsensorCheckBoxClick(this);", class: "sensor_checkbox" %>
+                                  <%= check_box_tag 'ute_experiment[settings][sensors][][name]', 'accelerometer', @experiment[:settings] && @experiment[:settings][:sensors] && @experiment[:settings][:sensors].any?{|sensor| sensor[:name] == 'accelerometer'}, onclick: "onsensorCheckBoxClick(this);", class: "sensor_checkbox" %>
+                                  <%# check_box_tag 'ute_experiment[settings][sensors][][name]', true, onclick: "onsensorCheckBoxClick(this);", class: "sensor_checkbox" %>
+                                  Accelerometer</label>
+                              </div>
+                              <div class="col-md-10">
+                                <%= text_field_tag 'ute_experiment[settings][sensors][][freq]', @experiment.getSensorSettingsFreqValue('accelerometer') || '50', style: 'width: 50px;', class: 'sensor_freq' %> Hz
+                              </div>
+                            </div>
+
+                            <div class="checkbox">
+                              <div class="col-md-2">
+                                <label class="control-label">
+                                  <%= check_box_tag 'ute_experiment[settings][sensors][][name]', 'magnetometer', @experiment[:settings] && @experiment[:settings][:sensors] && @experiment[:settings][:sensors].any?{|sensor| sensor[:name] == 'magnetometer'}, onclick: "onsensorCheckBoxClick(this);", class: "sensor_checkbox" %>
+                                  Magnetometer</label>
+                              </div>
+                              <div class="col-md-10">
+                                <%= text_field_tag 'ute_experiment[settings][sensors][][freq]', @experiment.getSensorSettingsFreqValue('magnetometer') || '50', style: 'width: 50px;', class: 'sensor_freq' %> Hz
+                              </div>
+                            </div>
+
+                            <div class="checkbox">
+                              <div class="col-md-2">
+                                <label class="control-label">
+                                  <%= check_box_tag 'ute_experiment[settings][sensors][][name]', 'gyroscope', @experiment[:settings] && @experiment[:settings][:sensors] && @experiment[:settings][:sensors].any?{|sensor| sensor[:name] == 'gyroscope'}, onclick: "onsensorCheckBoxClick(this);", class: "sensor_checkbox" %>
+                                  Gyroscope</label>
+                              </div>
+                              <div class="col-md-10">
+                                <%= text_field_tag 'ute_experiment[settings][sensors][][freq]', @experiment.getSensorSettingsFreqValue('gyroscope') || '50', style: 'width: 50px;', class: 'sensor_freq' %> Hz
+                              </div>
+                            </div>
+
+                            <div class="checkbox">
+                              <div class="col-md-2">
+                                <label class="control-label">
+                                  <%= check_box_tag 'ute_experiment[settings][sensors][][name]', 'barometer', @experiment[:settings] && @experiment[:settings][:sensors] && @experiment[:settings][:sensors].any?{|sensor| sensor[:name] == 'barometer'}, onclick: "onsensorCheckBoxClick(this);", class: "sensor_checkbox" %>
+                                  Barometer</label>
+                              </div>
+                              <div class="col-md-10">
+                                <%= text_field_tag 'ute_experiment[settings][sensors][][freq]', @experiment.getSensorSettingsFreqValue('barometer') || '1', style: 'width: 50px;', class: 'sensor_freq' %> Hz
+                              </div>
+                            </div>
+
+                            <div class="checkbox">
+                              <div class="col-md-2">
+                                <label class="control-label">
+                                  <%= check_box_tag 'ute_experiment[settings][sensors][][name]', 'bluetooth', @experiment[:settings] && @experiment[:settings][:sensors] && @experiment[:settings][:sensors].any?{|sensor| sensor[:name] == 'bluetooth'}, onclick: "onsensorCheckBoxClick(this);", class: "sensor_checkbox" %>
+                                  Bluetooth</label>
+                              </div>
+                              <div class="col-md-10">
+                                <%= text_field_tag 'ute_experiment[settings][sensors][][sec]', @experiment.getSensorSettingsSecValue('bluetooth') || '1', style: 'width: 50px;', class: 'sensor_freq' %> Second(s)
+                              </div>
+                            </div>
+
+                            <div class="checkbox">
+                              <div class="col-md-2">
+                                <label class="control-label">
+                                  <%= check_box_tag 'ute_experiment[settings][sensors][][name]', 'wifi', @experiment[:settings] && @experiment[:settings][:sensors] && @experiment[:settings][:sensors].any?{|sensor| sensor[:name] == 'wifi'}, onclick: "onsensorCheckBoxClick(this);", class: "sensor_checkbox" %>
+                                  WiFi</label>
+                              </div>
+                              <div class="col-md-10">
+                                <%= text_field_tag 'ute_experiment[settings][sensors][][sec]', @experiment.getSensorSettingsSecValue('wifi') || '10', style: 'width: 50px;', class: 'sensor_freq' %> Second(s)
+                              </div>
+                            </div>
+
+                            <div class="checkbox">
+                              <div class="col-md-2">
+                                <label class="control-label">
+                                  <%= check_box_tag 'ute_experiment[settings][sensors][][name]', 'cell', @experiment[:settings] && @experiment[:settings][:sensors] && @experiment[:settings][:sensors].any?{|sensor| sensor[:name] == 'cell'}, onclick: "onsensorCheckBoxClick(this);", class: "sensor_checkbox" %>
+                                  Cell</label>
+                              </div>
+                              <div class="col-md-10">
+                                <%= text_field_tag 'ute_experiment[settings][sensors][][freq]', @experiment.getSensorSettingsFreqValue('cell') || '10', style: 'width: 50px;', class: 'sensor_freq' %> Hz
+                              </div>
+                            </div>
+
+                            <div class="checkbox">
+                              <div class="col-md-2">
+                                <label class="control-label">
+                                  <%= check_box_tag 'ute_experiment[settings][sensors][][name]', 'gps', @experiment[:settings] && @experiment[:settings][:sensors] && @experiment[:settings][:sensors].any?{|sensor| sensor[:name] == 'gps'}, onclick: "onsensorCheckBoxClick(this);", class: "sensor_checkbox" %>
+                                  GPS</label>
+                              </div>
+                              <div class="col-md-10">
+                                <%= text_field_tag 'ute_experiment[settings][sensors][][sec]', @experiment.getSensorSettingsSecValue('gps') || '1', style: 'width: 50px;', class: 'sensor_freq' %> Second(s)
+                              </div>
+                            </div>
+
+                            <div class="checkbox">
+                              <div class="col-md-2">
+                                <label class="control-label">
+                                  <%= check_box_tag 'ute_experiment[settings][sensors][][name]', 'noise_level', @experiment[:settings] && @experiment[:settings][:sensors] && @experiment[:settings][:sensors].any?{|sensor| sensor[:name] == 'noise_level'}, onclick: "onsensorCheckBoxClick(this);", class: "sensor_checkbox" %>
+                                  Noise Level</label>
+                              </div>
+                              <div class="col-md-10">
+                                <%= text_field_tag 'ute_experiment[settings][sensors][][freq]', @experiment.getSensorSettingsFreqValue('noise_level') || '1', style: 'width: 50px;', class: 'sensor_freq' %> Hz
+                              </div>
+                            </div>
+                            
+                          </div>
+                        </div>
+
+                        <table class="table table-bordered">
+                          <tr><td>
+                            <h4>Interval Labels <button type="button" class="btn btn-default addNewCatButton"><i class="fa fa-plus"></i></button></h4>
+                          </tr></td>
+                          <tr class="category-container"><td>
+
+                  <% if @labels.to_a.any?
+                        @labels.each_with_index do |labelset, i_labelset|
+                          %>
+                            <div style="padding-left: 10px; padding-top: 10px; margin-bottom: 10px; border: solid 1px #ddd; border-radius: 4px 4px 0 0; background-color: #fff; -webkit-box-shadow: none; box-shadow: none;" class="ute-label-category" data-cat-index='<%= i_labelset %>'>
+                                <div class="form-group">
+                                  
+                                  <div class="col-md-3">
+                                    <label class=" control-label"> Category </label>
+                                    <button type="button" class="btn btn-default addCatButton"><i class="fa fa-plus"></i></button>
+                                    <button type="button" class="btn btn-default removeCatButton"><i class="fa fa-minus"></i></button>
+                                    <button type="button" class="btn btn-default downCatButton"><i class="fa fa-arrow-down"></i></button>
+                                    <button type="button" class="btn btn-default upCatButton"><i class="fa fa-arrow-up"></i></button>
+                                  </div>
+                                  <label class="col-md-1 control-label">Labels</label>
+                                </div>
+                              <% if labelset.to_a.any? 
+                                labelset.each_with_index do |labelitem, i_labelitem|
+                                %>
+                                <div class="form-group ute-label-component">
+                                    <div class="col-md-3">
+                                      <% if i_labelitem == 0 %>
+                                        <input placeholder="Label Category" type="text" class="form-control" name="labelnamesets[]" value="<%= @labelsetnames[i_labelset] %>" />
+                                      <% end %>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control labelitem" name="labels[<%=i_labelset %>][]" value="<%= labelitem %>" />
+                                    </div>
+                                    <div class="col-md-3">
+                                      <% if i_labelitem == 0 %>
+                                        <button type="button" class="btn btn-default addButton"><i class="fa fa-plus"></i></button>
+                                      <% else %>
+                                        <button type="button" class="btn btn-default removeButton"><i class="fa fa-minus"></i></button>
+                                      <% end %>
+                                        <button type="button" class="btn btn-default downButton"><i class="fa fa-arrow-down"></i></button>
+                                        <button type="button" class="btn btn-default upButton"><i class="fa fa-arrow-up"></i></button>
+                                    </div>                     
+                                </div>
+                              <% 
+                                end
+                              end %>
+
+                              <!-- The option field template containing an option field and a Remove button -->
+                              <div class="form-group ute-label-component hide labelTemplate">
+                                  <div class="col-md-3">&nbsp;</div>
+                                  <div class="col-md-5">
+                                      <input type="text" class="form-control labelitem" name="labels[<%=i_labelset %>][]" />
+                                  </div>
+                                  <div class="col-md-3">
+                                      <button type="button" class="btn btn-default removeButton"><i class="fa fa-minus"></i></button>
+                                      <button type="button" class="btn btn-default downButton"><i class="fa fa-arrow-down"></i></button>
+                                      <button type="button" class="btn btn-default upButton"><i class="fa fa-arrow-up"></i></button>
+                                  </div>                              
+                              </div>
+                            </div>
+                  
+                  <%
+                    end
+                  end 
+                  %>
+
+                            <div style="padding-left: 10px; padding-top: 10px; margin-bottom: 10px; border: solid 1px #ddd; border-radius: 4px 4px 0 0; background-color: #fff; -webkit-box-shadow: none; box-shadow: none;" class="ute-label-category cat-template hide">
+                                <div class="form-group">
+                                  
+                                  <div class="col-md-3">
+                                    <label class=" control-label"> Category </label>
+                                    <button type="button" class="btn btn-default addCatButton"><i class="fa fa-plus"></i></button>
+                                    <button type="button" class="btn btn-default removeCatButton"><i class="fa fa-minus"></i></button>
+                                    <button type="button" class="btn btn-default downCatButton"><i class="fa fa-arrow-down"></i></button>
+                                    <button type="button" class="btn btn-default upCatButton"><i class="fa fa-arrow-up"></i></button>
+                                  </div>
+                                  <label class="col-md-1 control-label">Labels</label>
+                                </div>
+                                <div class="form-group ute-label-component">
+                                    <div class="col-md-3">
+                                      <input placeholder="Label Category" type="text" class="form-control" name="lns" />
+                                    </div>
+                                    <div class="col-md-5">
+                                      <input type="text" class="form-control labelitem" name="lar" />
+                                    </div>
+                                    <div class="col-md-3">
+                                      <button type="button" class="btn btn-default addButton"><i class="fa fa-plus"></i></button>
+                                      <button type="button" class="btn btn-default downButton"><i class="fa fa-arrow-down"></i></button>
+                                      <button type="button" class="btn btn-default upButton"><i class="fa fa-arrow-up"></i></button>
+                                    </div>                     
+                                </div>
+
+                              <!-- The option field template containing an option field and a Remove button -->
+                              <div class="form-group ute-label-component hide labelTemplate">
+                                  <div class="col-md-3">&nbsp;</div>
+                                  <div class="col-md-5">
+                                      <input type="text" class="form-control labelitem" name="lar" />
+                                  </div>
+                                  <div class="col-md-3">
+                                      <button type="button" class="btn btn-default removeButton"><i class="fa fa-minus"></i></button>
+                                      <button type="button" class="btn btn-default downButton"><i class="fa fa-arrow-down"></i></button>
+                                      <button type="button" class="btn btn-default upButton"><i class="fa fa-arrow-up"></i></button>
+                                  </div>                              
+                              </div>
+                            </div>
+
+                          </tr></td>
+                        </table>
+
+                        <!--<div class="form-group">
+                          <%# = f.checkbox_field(:is_private, class: "form-control", placeholder: "Private") %>
+                        </div>-->
+                        
+                        <!-- Change this to a button or input when using this as a form -->
+                        <%= f.submit "Save", class: "btn btn-lg btn-info btn-block" %>
+                    </fieldset>
+                <% end %>
+              </div>
+          </div>
+        </div>
+        <!-- /.row -->
+
+    </div>
+    <!-- /.container-fluid -->
+
+  </div>
+  <!-- /#page-wrapper -->
+
+</div>
+<!-- /#wrapper -->
+ 
+<br>
+
+<script type="application/javascript">
+  $('[data-toggle="tooltip"]').tooltip(); 
+
+  $('#editform').submit(function() {
+    return confirm('Are you sure?');
+  });
+
+  function onsensorCheckBoxClick(theobject) {
+    var isChecked = $(theobject).prop('checked')
+    if(isChecked) {
+        $(".sensor_freq", $(theobject).parent().parent().parent()).removeAttr("disabled");
+    } else {
+        $(".sensor_freq", $(theobject).parent().parent().parent()).prop('disabled', true)
+    }
+  }
+
+  $(".sensor_checkbox").each(function() {
+    onsensorCheckBoxClick(this);
+  });
+
+  function removeLabelFunc() {
+    var $row    = $(this).parents('.form-group'),
+                $option = $row.find('.labelitem');
+    $row.remove();
+  }
+
+  function movedownLabelFunc() {
+    var $row    = $(this).parents('.form-group'),
+                $option = $row.find('.labelitem');
+    var currentValue = $option.val();
+    var $nextRow = $row.next();
+    if($nextRow.is('.ute-label-component') && !$nextRow.is('.hide')) {
+      var nextRowValue = $nextRow.find('.labelitem').val();
+      // begin swapping
+      $nextRow.find('.labelitem').val(currentValue);
+      $option.val(nextRowValue);
+    }
+  }
+
+  function moveupLabelFunc() {
+    var $row    = $(this).parents('.form-group'),
+                $option = $row.find('.labelitem');
+    var currentValue = $option.val();
+    var $previousRow = $row.prev();
+    if($previousRow.is('.ute-label-component')) {
+      var previousRowValue = $previousRow.find('.labelitem').val();
+      // begin swapping
+      $previousRow.find('.labelitem').val(currentValue);
+      $option.val(previousRowValue);
+    }
+  }
+
+  function movedownCategoryFunc() {
+    currentRow = $(this).parents('.ute-label-category');
+    indexofcurrentrow = parseInt(currentRow.data("cat-index"));
+    nextRow = currentRow.next();
+
+    if(nextRow.is('.ute-label-category') && !nextRow.is('.hide')) {
+      // begin swapping the category divs 
+      indexOfNextRow = parseInt(nextRow.data("cat-index"));
+      indexOfNextRowToSave = indexofcurrentrow;
+      $('[name="labels[' + indexOfNextRow + '][]"]', nextRow).attr('name', 'labels[' + indexOfNextRowToSave + '][]');
+      $('[name="labels[' + indexOfNextRow + '][]"]', nextRow).attr('name', 'labels[' + indexOfNextRowToSave + '][]');
+      nextRow.data("cat-index", indexOfNextRowToSave);
+      
+      $('[name="labels[' + indexofcurrentrow + '][]"]', currentRow).attr('name', 'labels[' + indexOfNextRow + '][]');
+      $('[name="labels[' + indexofcurrentrow + '][]"]', currentRow).attr('name', 'labels[' + indexOfNextRow + '][]');
+      currentRow.data("cat-index", indexOfNextRow);
+
+      currentRow.insertAfter(nextRow);
+    }
+  }
+
+  function moveupCategoryFunc() {
+    currentRow = $(this).parents('.ute-label-category');
+    indexofcurrentrow = parseInt(currentRow.data("cat-index"));
+    prevRow = currentRow.prev();
+
+    if(prevRow.length > 0 && prevRow.is('.ute-label-category')) {
+      // begin swapping the category divs 
+      indexOfPrevRow = parseInt(prevRow.data("cat-index"));
+      indexOfPrevRowToSave = indexofcurrentrow;
+      $('[name="labels[' + indexOfPrevRow + '][]"]', prevRow).attr('name', 'labels[' + indexOfPrevRowToSave + '][]');
+      $('[name="labels[' + indexOfPrevRow + '][]"]', prevRow).attr('name', 'labels[' + indexOfPrevRowToSave + '][]');
+      prevRow.data("cat-index", indexOfPrevRowToSave);
+      
+      $('[name="labels[' + indexofcurrentrow + '][]"]', currentRow).attr('name', 'labels[' + indexOfPrevRow + '][]');
+      $('[name="labels[' + indexofcurrentrow + '][]"]', currentRow).attr('name', 'labels[' + indexOfPrevRow + '][]');
+      currentRow.data("cat-index", indexOfPrevRow);
+
+      currentRow.insertBefore(prevRow);
+    }
+  }
+
+  function addLabelFunc() {
+    var $template = $('.labelTemplate', $(this).parents('.ute-label-category')),
+                $clone    = $template
+                                .clone()
+                                .removeClass('hide labelTemplate')
+                                .removeAttr('id')
+                                .insertBefore($template),
+                $option   = $clone.find('.labelitem');
+    $(".removeButton", $clone).click(removeLabelFunc);
+    $(".downButton", $clone).click(movedownLabelFunc);
+    $(".upButton", $clone).click(moveupLabelFunc);
+  }
+
+  function initNewCategoryUIBinding(target) {
+    $(".addButton", target).click(addLabelFunc);
+    $(".addCatButton", target).click(addCategoryFunc);
+    $(".removeCatButton", target).click(removeCategoryLabelFunc);
+    $(".removeButton", target).click(removeLabelFunc);
+    $(".downButton", target).click(movedownLabelFunc);
+    $(".upButton", target).click(moveupLabelFunc);
+    $(".downCatButton", target).click(movedownCategoryFunc);
+    $(".upCatButton", target).click(moveupCategoryFunc);
+  }
+
+  function removeCategoryLabelFunc() {
+    currentRow = $(this).parents('.ute-label-category');
+    indexofcurrentrow = parseInt(currentRow.data("cat-index"));
+    
+    nextRow = currentRow.next();
+
+    while(nextRow.is('.ute-label-category') && !nextRow.is('.hide')) {
+      // increase index by 1. 
+      indexOfNextRow = parseInt(nextRow.data("cat-index"));
+      indexMinus1 = indexOfNextRow - 1;
+      $('[name="labels[' + indexOfNextRow + '][]"]', nextRow).attr('name', 'labels[' + indexMinus1 + '][]');
+      $('[name="labels[' + indexOfNextRow + '][]"]', nextRow).attr('name', 'labels[' + indexMinus1 + '][]');
+      nextRow.data("cat-index", indexMinus1);
+      nextRow = nextRow.next();
+    }
+
+    currentRow.remove();
+  }
+
+  function addCategoryFunc() {
+    currentRow = $(this).parents('.ute-label-category');
+    indexofcurrentrow = parseInt(currentRow.data("cat-index"));
+    var $template = $('.cat-template', $(this).parents('.category-container')),
+    $clone    = $template
+                    .clone()
+                    .removeClass('hide cat-template')
+                    .removeAttr('id');
+    nextRow = currentRow.next();
+
+    while(nextRow.is('.ute-label-category') && !nextRow.is('.hide')) {
+      // increase index by 1. 
+      indexOfNextRow = parseInt(nextRow.data("cat-index"));
+      indexPlus1 = indexOfNextRow + 1;
+      $('[name="labels[' + indexOfNextRow + '][]"]', nextRow).attr('name', 'labels[' + indexPlus1 + '][]');
+      $('[name="labels[' + indexOfNextRow + '][]"]', nextRow).attr('name', 'labels[' + indexPlus1 + '][]');
+      nextRow.data("cat-index", indexPlus1);
+      nextRow = nextRow.next();
+    }
+
+    indexOfNewRow = indexofcurrentrow + 1;
+    $('[name="lns"]', $clone).attr('name', 'labelnamesets[]');
+    $('[name="lar"]', $clone).attr('name', 'labels[' + indexOfNewRow + '][]');
+    $clone.data("cat-index", indexOfNewRow);
+    $clone.insertAfter(currentRow);
+
+    initNewCategoryUIBinding($clone);
+  }
+
+  $(".addNewCatButton").click(function() {
+    firstRow = $('.ute-label-category').first();
+    currentRow = firstRow;
+    while(currentRow.is('.ute-label-category') && !currentRow.is('.hide')) {
+      // increase index by 1. 
+      indexofcurrentrow = parseInt(currentRow.data("cat-index"));
+      indexPlus1 = indexofcurrentrow + 1;
+      $('[name="labels[' + indexofcurrentrow + '][]"]', currentRow).attr('name', 'labels[' + indexPlus1 + '][]');
+      $('[name="labels[' + indexofcurrentrow + '][]"]', currentRow).attr('name', 'labels[' + indexPlus1 + '][]');
+      currentRow.data("cat-index", indexPlus1);
+      currentRow = currentRow.next();
+    }
+
+    var $template = $('.cat-template', $(firstRow).parents('.category-container')),
+    $clone    = $template
+                    .clone()
+                    .removeClass('hide cat-template')
+                    .removeAttr('id');    
+
+    indexOfNewRow = 0;
+    $('[name="lns"]', $clone).attr('name', 'labelnamesets[]');
+    $('[name="lar"]', $clone).attr('name', 'labels[0][]');
+    $clone.data("cat-index", indexOfNewRow);
+    $clone.insertBefore(firstRow);
+    initNewCategoryUIBinding($clone);
+  });
+  $(".addButton").click(addLabelFunc);
+  $(".addCatButton").click(addCategoryFunc);
+  $(".removeCatButton").click(removeCategoryLabelFunc);
+  $(".removeButton").click(removeLabelFunc);
+  $(".downButton").click(movedownLabelFunc);
+  $(".upButton").click(moveupLabelFunc);
+  $(".downCatButton").click(movedownCategoryFunc);
+  $(".upCatButton").click(moveupCategoryFunc);
+
+  //$(document).on('page:change', onDocReady);
+  //$(document).on('page:change', onDocReady);
+</script>

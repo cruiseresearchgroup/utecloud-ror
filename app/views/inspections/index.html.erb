@@ -1,0 +1,65 @@
+<h1>Listing Sessions</h1>
+ 
+ <style>
+ 	table, td {
+    	border: 1px solid black;
+	}
+	
+	table{
+		border-spacing: 10px;
+    	border-collapse: separate;
+	}
+	
+	td {
+		padding: 10px;
+	}
+ </style>
+<table>
+  <tr>
+    <th>Session ID</th>
+    <th>Summary</th>
+    <th>Is Active</th>
+    <th>Created At (UTC)</th>
+    <th>Created At (Melbourne)</th>
+    <th>Finished At (UTC)</th>
+    <th>Finished At (Melbourne)</th>
+    <th>Initiated by device ID</th>
+    <th>Has OBD?</th>
+    <th>Driver</th>
+    <th>Actions</th>
+  </tr>
+ 
+<% @allSessions.each do |session| %>
+  <tr>
+    <td><%= session.session_number %></td>
+    <td>
+    	<% case session.task_type 
+		   when 1 %>
+    		Straight line braking
+    	<% when 2 %>
+    		Swerve &amp; braking to a full stop
+    	<% when 3 %>
+    		Slalom
+    	<% when 4 %>
+    		Brake(discretionary), turn, recover
+    	<% when 5 %>
+    		Acceleration and brake
+    	<% end %>
+	</td>
+    <td><%= session.is_active %></td>
+    <td><%= session.created_at %></td>
+    <td><%= session.created_at.in_time_zone('Melbourne') %></td>
+    <td><%= session.finished_at? ? session.finished_at : "-" %></td>
+    <td><%= session.finished_at? ? session.finished_at.in_time_zone('Melbourne') : "-" %></td>
+    <td><%= session.initiated_by_device_id %></td>
+    <td>
+    	<% _hasObd = session.obd_links.exists? %>
+    	<%= label_tag(nil, _hasObd ? "Yes" : "No", { :class=>"label label-lg "+ (_hasObd ? "label-success" : "label-danger") }) %>
+    </td>
+    <td><%= session.initiated_by_name %></td>
+    <td><%= link_to "View", { controller: "inspections", action: "connections", id: session.id }, { :data => { :no_turbolink => 'data-no-turbolink' } } %></td>
+  </tr>
+<% end %>
+</table>
+ 
+<br>

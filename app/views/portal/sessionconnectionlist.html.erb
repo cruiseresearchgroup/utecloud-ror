@@ -1,0 +1,312 @@
+<div id="wrapper">
+
+  <!-- Navigation -->
+  <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+      <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="<%= portal_experimentlist_path %>">UTE - My Portal</a>
+      </div>
+      <!-- /.navbar-header -->
+
+      <ul class="nav navbar-top-links navbar-right">
+          <!-- /.dropdown -->
+          <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                  <i class="fa fa-user fa-fw"></i>  <i class="fa fa-caret-down"></i>
+              </a>
+              <ul class="dropdown-menu dropdown-user">
+                  <!--<li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
+                  </li>
+                  <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a>
+                  </li>-->
+                  <li class="divider"></li>
+                  <li><a href="<%= users_logout_path %>"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
+                  </li>
+              </ul>
+              <!-- /.dropdown-user -->
+          </li>
+          <!-- /.dropdown -->
+      </ul>
+      <!-- /.navbar-top-links -->
+
+      <div class="navbar-default sidebar" role="navigation">
+          <div class="sidebar-nav navbar-collapse">
+              <ul class="nav" id="side-menu">
+                  <!--<li class="sidebar-search">
+                      <div class="input-group custom-search-form">
+                          <input type="text" class="form-control" placeholder="Search...">
+                          <span class="input-group-btn">
+                          <button class="btn btn-default" type="button">
+                              <i class="fa fa-search"></i>
+                          </button>
+                      </span>
+                      </div>-->
+                      <!-- /input-group -->
+                  <!--</li>-->
+                  <li class="active">
+                      <a data-no-turbolink="true" href="<%= portal_experimentlist_path %>"><i class="fa fa-table fa-fw"></i> Experiments</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-lightbulb-o fa-fw"></i> Analyse</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-cube fa-fw"></i> Simulate</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-bookmark fa-fw"></i> Integrate</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-area-chart fa-fw"></i> Visualise</a>
+                  </li>
+                  <li>
+                      <a data-no-turbolink="true" href=""><i class="fa fa-archive fa-fw"></i> Archived</a>
+                  </li>
+              </ul>
+          </div>
+          <!-- /.sidebar-collapse -->
+      </div>
+      <!-- /.navbar-static-side -->
+  </nav>
+
+  <div id="page-wrapper">
+
+      <div class="container-fluid">
+
+        <!-- Page Heading -->
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header">
+                    <!--Listing of Recorded Sessions-->
+                </h1>
+                <ol class="breadcrumb">
+                    <li>
+                        <i class="fa fa-dashboard"></i>  
+                        <%= link_to("Experiments", { controller: "portal", action: "experimentlist" }, { :data => { :no_turbolink => true } }) %>
+                    </li>
+                    <li class="active">
+                        <i class="fa fa-table"></i> Experiment - <%= h(@experiment.talias + " <<ID: " + @experiment.experiment_code + ">>" ) %>
+                    </li>
+                </ol>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <div class="row">
+          <div class="col-lg-12">
+            <% if @experiment.is_cacheable %>
+            <input id='btn-newdevicepairing' type="button" class="btn btn-info btn-sm" value="New Device Pairing" />
+            <% end %>
+
+            <%# link_to("Pair List", { controller: "portal", action: "paireddeviceslist", id: @experiment.id },
+            { :class=>"btn btn-info btn-sm", :data => { :no_turbolink => 'data-no-turbolink' } }) %>
+
+            <% if @experiment.owner == session[:user_id] %>
+              <input id='btn-purge' type="button" class="btn btn-danger btn-sm" data-remove-text="Purge" data-ute-id="<%= @experiment.id %>" value="Purge All Experiment Data" />
+            <% end %>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-12">
+            <hr/>
+          </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+              <div class="table-responsive">
+                  <% timezonetodisplay = session[:user_tz] || 'Melbourne' %>
+                  <table class="table table-bordered table-hover">
+                      <thead>
+                          <tr>
+                              <th>Session Code</th>
+                              <th>Start Time</th>
+                              <th>End Time</th>
+                              <th>Is Active</th>
+                              <th>Data (iOS)</th>
+                              <th>Data (Android)</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <% @sessions.each do |session| %>
+                            <tr class="ute-row-ex-<%= session.id %> sessionrow">
+                              <td><%= session.session_code %></td>
+                              <td><%= session.range_start_at ? Time.at(session.range_start_at).in_time_zone(timezonetodisplay) : '-' %></td>
+                              <td><%= session.range_end_at ? Time.at(session.range_end_at).in_time_zone(timezonetodisplay) : '-' %></td>
+                              <td><%= session.is_active ? "Yes" : "No" %></td>
+                              <td>
+                                <% session.ute_ex_session_connections.each do |connection| %>
+                                  <% if connection.device_type == 1 %>
+                                    <% if connection.ute_ex_session_sensorinfos.exists? %>
+                                         <%= (link_to "Sensor data(CSV)", {controller: "portal", action: "sensorInfos", id: params[:id], sessionId: session.id, connectionId: connection.id}, data: { :"no-turbolink" => true }, :target => "_blank") %>
+                                         <br/>
+                                    <% end
+                                       if connection.ute_ex_session_bluetoothinfos.exists? %>
+                                         <%= (link_to "Bluetooth(CSV)", {controller: "portal", action: "bluetoothInfos", id: params[:id], sessionId: session.id, connectionId: connection.id}, data: { :"no-turbolink" => true }, :target => "_blank") %>
+                                    <% end
+                                       if connection.ute_ex_session_wifiinfos.exists? %>
+                                         <%= (link_to "WiFi(CSV)", {controller: "portal", action: "wifiInfos", id: params[:id], sessionId: session.id, connectionId: connection.id}, data: { :"no-turbolink" => true }, :target => "_blank") %>
+                                    <% end
+                                       if connection.ute_ex_session_intervallabels.exists? %>
+                                         <%= (link_to "Interval label(CSV)", {controller: "portal", action: "intervalLabels", id: params[:id], sessionId: session.id, connectionId: connection.id}, data: { :"no-turbolink" => true }, :target => "_blank") %>
+                                    <% end
+                                    end 
+                                   end %>
+                              </td>
+                              <td>
+                                <% session.ute_ex_session_connections.each do |connection| %>
+                                  <% if connection.device_type == 2 %>
+                                    <% if connection.ute_ex_session_sensorinfos.exists? %>
+                                         <%= (link_to "Sensor data(CSV)", {controller: "portal", action: "sensorInfos", id: params[:id], sessionId: session.id, connectionId: connection.id}, data: { :"no-turbolink" => true }, :target => "_blank") %>
+                                         <br/>
+                                    <% end
+                                       if connection.ute_ex_session_bluetoothinfos.exists? %>
+                                         <%= (link_to "Bluetooth(CSV)", {controller: "portal", action: "bluetoothInfos", id: params[:id], sessionId: session.id, connectionId: connection.id}, data: { :"no-turbolink" => true }, :target => "_blank") %>
+                                    <% end
+                                       if connection.ute_ex_session_wifiinfos.exists? %>
+                                         <%= (link_to "WiFi(CSV)", {controller: "portal", action: "wifiInfos", id: params[:id], sessionId: session.id, connectionId: connection.id}, data: { :"no-turbolink" => true }, :target => "_blank") %>
+                                    <% end
+                                       if connection.ute_ex_session_cellinfos.exists? %>
+                                         <%= (link_to "Cell(CSV)", {controller: "portal", action: "cellInfos", id: params[:id], sessionId: session.id, connectionId: connection.id}, data: { :"no-turbolink" => true }, :target => "_blank") %>
+                                    <% end
+                                       if connection.ute_ex_session_intervallabels.exists? %>
+                                         <%= (link_to "Interval label(CSV)", {controller: "portal", action: "intervalLabels", id: params[:id], sessionId: session.id, connectionId: connection.id}, data: { :"no-turbolink" => true }, :target => "_blank") %>
+                                    <% end
+                                    end 
+                                   end %>
+                              </td>
+                            </tr>
+                          <% end %>
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+        </div>
+        <!-- /.row -->
+
+    </div>
+    <!-- /.container-fluid -->
+
+  </div>
+  <!-- /#page-wrapper -->
+
+</div>
+<!-- /#wrapper -->
+
+<% content_for :js do %>
+  
+<% end %>
+
+<script type="application/javascript">
+  var onreadySetup = function() {
+    $('#btn-newdevicepairing').click(function(){
+      $.ajax({
+        url: '<%= portal_experiment_createnewdevicepair_path %>',
+        method: 'POST',
+        data: {
+          experiment_id: '<%= @experiment.id %>',
+        },
+        success: function(dataObject) {
+          if(dataObject.success) {
+            $('#otpvalue').html(dataObject.otp);
+            $('#newotpmodal').modal({ backdrop: 'static', keyboard: false });
+          }
+        }
+      });
+    });
+
+    $('#btn-purge').click(function(){
+
+      // confirm modal
+      $('#confirmpurgedatamodal').modal({ backdrop: 'static', keyboard: false })
+                              .one('click', '#experiment-btn-purge-confirmed', function() {
+                                $('#purgeWaitDialog').modal();
+                                $.ajax({
+                                  url: '<%= portal_experiment_purge_path %>',
+                                  method: 'POST',
+                                  data: {
+                                    experiment_id: '<%= @experiment.id %>',
+                                  },
+                                  success: function(dataObject) {
+                                    if((dataObject != null || dataObject != undefined) && dataObject.success) {
+                                      $(".sessionrow").remove();
+                                      $('#purgeWaitDialog').modal('hide');
+                                      displaySuccessPurgedData();
+                                    }
+                                  }
+                                });
+                              });
+    });
+  }
+  onreadySetup();
+
+  function displaySuccessPurgedData() {
+    $('#successfulpurgedatamodal').modal({ backdrop: 'static', keyboard: false });
+  }
+</script>
+
+<div id="newotpmodal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        Your OTP for new device pairing is: <b><label id='otpvalue'></label></b>
+      </div>
+      <div class="modal-footer">
+        <button type="button" data-dismiss="modal" class="btn">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="confirmpurgedatamodal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <p style="color: red; font-weight: bold;">*This action is irreversible</p>
+        <p>Are you sure to purge all data in this experiment?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" data-dismiss="modal" class="btn btn-danger" id="experiment-btn-purge-confirmed">Purge</button>
+        <button type="button" data-dismiss="modal" class="btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="successfulpurgedatamodal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        All data in this experiment have been purged successfully.
+      </div>
+      <div class="modal-footer">
+        <button type="button" data-dismiss="modal" class="btn btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="purgeWaitDialog" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+          <h4>Purging Data for <%= h(@experiment.talias.presence || @experiment.experiment_code) %>...</h4>
+      </div>
+      <div class="modal-body">
+          <div class="progress">
+            <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+              <span class="sr-only">progressing</span>
+            </div>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+ 
+<br>

@@ -1,0 +1,149 @@
+<div id="wrapper">
+
+  <!-- Navigation -->
+  <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+      <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/portal/sessionconnectioninfos">UTE - My Portal</a>
+      </div>
+      <!-- /.navbar-header -->
+
+      <ul class="nav navbar-top-links navbar-right">
+          <!-- /.dropdown -->
+          <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                  <i class="fa fa-user fa-fw"></i>  <i class="fa fa-caret-down"></i>
+              </a>
+              <ul class="dropdown-menu dropdown-user">
+                  <!--<li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
+                  </li>
+                  <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a>
+                  </li>-->
+                  <li class="divider"></li>
+                  <li><a href="<%= users_logout_path %>"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
+                  </li>
+              </ul>
+              <!-- /.dropdown-user -->
+          </li>
+          <!-- /.dropdown -->
+      </ul>
+      <!-- /.navbar-top-links -->
+
+      <div class="navbar-default sidebar" role="navigation">
+          <div class="sidebar-nav navbar-collapse">
+              <ul class="nav" id="side-menu">
+                  <!--<li class="sidebar-search">
+                      <div class="input-group custom-search-form">
+                          <input type="text" class="form-control" placeholder="Search...">
+                          <span class="input-group-btn">
+                          <button class="btn btn-default" type="button">
+                              <i class="fa fa-search"></i>
+                          </button>
+                      </span>
+                      </div>-->
+                      <!-- /input-group -->
+                  <!--</li>-->
+                  <li class="active">
+                      <a href="/portal/sessionconnectioninfos"><i class="fa fa-table fa-fw"></i> Experiments</a>
+                  </li>
+              </ul>
+          </div>
+          <!-- /.sidebar-collapse -->
+      </div>
+      <!-- /.navbar-static-side -->
+  </nav>
+
+  <div id="page-wrapper">
+
+      <div class="container-fluid">
+
+        <!-- Page Heading -->
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header">
+                    <!--Listing of Recorded Sessions-->
+                </h1>
+                <ol class="breadcrumb">
+                    <li>
+                        <i class="fa fa-dashboard"></i>  <a href="/portal/sessionconnectioninfos">Experiments</a>
+                    </li>
+                    <li class="active">
+                        <i class="fa fa-table"></i> Sessions
+                    </li>
+                </ol>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <div class="row">
+            <div class="col-lg-12">
+              
+              <div class="table-responsive">
+                  <table class="table table-bordered table-hover">
+                      <thead>
+                          <tr>
+                              <th>Session ID</th>
+                              <th>Device ID</th>
+                              <th>Device Type</th>
+                              <th>Is Active</th>
+                              <th>Created At (UTC)</th>
+                              <th>Created At (Melbourne)</th>
+                              <th>Finished At (UTC)</th>
+                              <th>Finished At (Melbourne)</th>
+                              <th>Initiated by device ID</th>
+                              <th>Sensing</th>
+                              <th>Labels</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <% @allSessions.each do |session| %>
+                            <% session.session_connections.each do |session_connection| %>
+                              <% session_connection.session_sensor_infos.each do |session_sensor_info| %>
+                                <tr>
+                                  <td><%= session.session_number %></td>
+                                  <td><%= session_connection.device_id %></td>
+                                    <td>
+                                      <% case session_connection.device_type 
+                                       when 1 %>
+                                        iOS
+                                      <% when 2 %>
+                                        Android
+                                      <% end %>
+                                  </td>
+                                  <td><%= session.is_active ? "Yes" : "No" %></td>
+                                  <td><%= session.created_at %></td>
+                                  <td><%= session.created_at.in_time_zone('Melbourne') %></td>
+                                  <td><%= session.finished_at? ? session.finished_at : "-" %></td>
+                                  <td><%= session.finished_at? ? session.finished_at.in_time_zone('Melbourne') : "-" %></td>
+                                  <td><%= session.initiated_by_device_id %></td>
+                                  <td><%= (link_to "CSV", controller: "portal", action: "sensorInfos", connectionId: session_connection.id) %></td>
+                                  <td><%= (link_to "View", controller: "portal", action: "sensorInfos", connectionId: session_connection.id) %></td>
+                                </tr>
+                              <% end %>
+                            <% end %>
+                          <% end %>
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+        </div>
+        <!-- /.row -->
+
+    </div>
+    <!-- /.container-fluid -->
+
+  </div>
+  <!-- /#page-wrapper -->
+
+</div>
+<!-- /#wrapper -->
+
+
+
+ 
+<br>

@@ -1,0 +1,261 @@
+
+<%= link_to("Back", { controller: "inspections", action: "index" },
+            { :class=>"btn btn-md btn-info", :data => { :no_turbolink => 'data-no-turbolink' } }) %>
+
+<%= label_tag(nil, "This session has OBDLink data", { :class=>"label label-md label-warning" }) if @hasObd %>
+
+<h1>Session: <%= @sessionNumber %></h1>
+<h2>
+	Task Type: 
+	<% case @task_type 
+	   when 1 %>
+		Straight line braking
+	<% when 2 %>
+		Swerve &amp; braking to a full stop
+	<% when 3 %>
+		Slalom
+	<% when 4 %>
+		Brake(discretionary), turn, recover
+	<% when 5 %>
+		Acceleration and brake
+	<% end %>
+</h2>
+ 
+ <style>
+ 	table, td {
+    	border: 1px solid black;
+	}
+	
+	table{
+		border-spacing: 10px;
+    	border-collapse: separate;
+	}
+	
+	td {
+		padding: 10px;
+	}
+ </style>
+<table>
+  <tr>
+    <th>Device ID</th>
+    <th>Device Type</th>
+    <th>Is Active</th>
+    <th>Connected At (UTC)</th>
+    <th>Connected At (Melbourne)</th>
+    <th>Sensors</th>
+    <th>Surveys</th>
+    <th>Visualize</th>
+  </tr>
+ 
+<% @sessionConnections.each do |sessionConnection| %>
+  <% _hasSensorInfo = sessionConnection.session_sensor_infos.exists? %>
+  <tr>
+    <td><%= sessionConnection.device_id %></td>
+    <td>
+    	<% case sessionConnection.device_type 
+		   when 1 %>
+    		iOS
+    	<% when 2 %>
+    		Android
+    	<% end %>
+	</td>
+    <td><%= sessionConnection.is_active %></td>
+    <td><%= sessionConnection.connected_at %></td>
+    <td><%= sessionConnection.connected_at.in_time_zone('Melbourne') %></td>
+    <td><%= _hasSensorInfo ? (link_to "CSV", controller: "inspections", action: "sensorInfos", connectionId: sessionConnection.id) : '' %></td>
+    <td><%= sessionConnection.session_surveys.exists? ? (link_to "CSV", controller: "inspections", action: "surveys", connectionId: sessionConnection.id) : '' %></td>
+  	<td>
+  		<% if _hasSensorInfo %>
+  			<div>
+  				<input type="hidden" class="viz-device-id" value="<%= sessionConnection.device_id %>" />
+  				<select class="option-sensor multiselect" multiple="multiple" >
+					<option value="accelerometer_acceleration_x">accelerometer_acceleration_x</option>
+					<option value="accelerometer_acceleration_y">accelerometer_acceleration_y</option>
+					<option value="accelerometer_acceleration_z">accelerometer_acceleration_z</option>
+					<option value="motion_gravity_x">motion_gravity_x</option>
+					<option value="motion_gravity_y">motion_gravity_y</option>
+					<option value="motion_gravity_z">motion_gravity_z</option>
+					<option value="motion_user_acceleration_x">motion_user_acceleration_x</option>
+					<option value="motion_user_acceleration_y">motion_user_acceleration_y</option>
+					<option value="motion_user_acceleration_z">motion_user_acceleration_z</option>
+					<option value="motion_attitude_yaw">motion_attitude_yaw</option>
+					<option value="motion_attitude_pitch">motion_attitude_pitch</option>
+					<option value="motion_attitude_roll">motion_attitude_roll</option>
+					<option value="gyroscope_rotationrate_x">gyroscope_rotationrate_x</option>
+					<option value="gyroscope_rotationrate_y">gyroscope_rotationrate_y</option>
+					<option value="gyroscope_rotationrate_z">gyroscope_rotationrate_z</option>
+					<option value="motion_rotationrate_x">motion_rotationrate_x</option>
+					<option value="motion_rotationrate_y">motion_rotationrate_y</option>
+					<option value="motion_rotationrate_z">motion_rotationrate_z</option>
+					<option value="magnetic_heading_x">magnetic_heading_x</option>
+					<option value="magnetic_heading_y">magnetic_heading_y</option>
+					<option value="magnetic_heading_z">magnetic_heading_z</option>
+					<option value="calibrated_magnetic_field_x">calibrated_magnetic_field_x</option>
+					<option value="calibrated_magnetic_field_y">calibrated_magnetic_field_y</option>
+					<option value="calibrated_magnetic_field_z">calibrated_magnetic_field_z</option>
+					<option value="calibrated_magnetic_field_accuracy">calibrated_magnetic_field_accuracy</option>
+					<option value="magnetometer_x">magnetometer_x</option>
+					<option value="magnetometer_y">magnetometer_y</option>
+					<option value="magnetometer_z">magnetometer_z</option>
+					<option value="gps_speed">gps_speed</option>
+				</select>
+  				<input type="button" class="btn btn-success btn-xs viz-btn" data-val="<%= sessionConnection.id %>" value="Visualize"/>
+  			</div>
+  		<% end %>	
+	</td>
+  </tr>
+<% end %>
+</table>
+
+<div style="padding: 10px;">
+    <%= link_to("Aggregate", { controller: "inspections", action: "show_aggregations", id: @session.id },
+            { :id => "aggregate-button", :class=>"btn btn-danger", :method => :get, :data => { :no_turbolink => 'data-no-turbolink' } }) %>
+</div>
+ 
+<br>
+
+<div id="vizContainer" style="padding: 50px;"></div>
+
+<script type="application/javascript">
+	var onDocReady = function(){
+		if(!window.Highcharts){
+			jQuery.getScript("/assets/highstock/highstock.js", function(data, status, jqxhr) {
+				Highcharts.setOptions({
+					global: {
+						useUTC: false
+					}
+				});
+				initUI();
+				
+				$('.option-sensor').multiselect({
+		            dropRight: true,
+		            nonSelectedText: 'Sensor Types',
+		            nSelectedText: 'Sensor Types'
+		        });
+			});
+			
+			jQuery.getScript("/assets/highstock/modules/exporting", function(data, status, jqxhr) {
+	
+			});
+		}
+		
+		initUI();
+	};
+		
+	initUI();
+	$(document).ready(onDocReady);
+	$(document).on('page:load', onDocReady);
+	
+	var seriesOptions = [];
+	var seriesCounter = 0;
+	var createChart;
+	
+	function initUI() {
+		if(window.Highcharts) {
+			$('.viz-btn').unbind();
+			$('.viz-btn').on('click', function() {
+				var sessionConnectionId = $(this).data( "val" );
+				var selectedSensorsToInspect = $('.option-sensor option:selected', $(this).parent());
+				if(selectedSensorsToInspect.length == 0) {
+					alert('Please select sensor type to visualize');
+					return;
+				}
+				
+				var selectedSensorListToInspect = [];
+				for(var i = 0; i < selectedSensorsToInspect.length; i++) {
+					selectedSensorListToInspect.push($(selectedSensorsToInspect[i]).val());
+				}
+				
+				var selectedDeviceId = $('.viz-device-id', $(this).parent()).val();
+				// should ajax request. 
+				
+				createChart = function() {
+					$('#vizContainer').highcharts('StockChart', {
+				        chart: {
+				            type: 'spline',
+				            zoomType: 'x'
+				        },
+				        title: {
+				            text: 'Sensor Reading for Device ID: ' + selectedDeviceId
+				        },
+				        subtitle: {
+				            text: selectedSensorListToInspect
+				        },
+				        xAxis: {
+				            type: 'datetime',
+				            dateTimeLabelFormats: { // don't display the dummy year
+				                month: '%e. %b',
+				                year: '%b'
+				            },
+				            title: {
+				                text: 'Timestamp'
+				            }
+				        },
+				        yAxis: {
+				            title: {
+				                text: "Sensor reading"
+				            }
+				        },
+				        tooltip: {
+				            pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b><br/>'
+				        },
+				        plotOptions: {
+				        	area: {
+				        		turboThreshold: 50000
+				        	}
+				        },
+				
+				        series: seriesOptions
+				    });
+				};
+			    
+			    seriesCounter = 0;
+			    $.each(selectedSensorListToInspect, function (i, name) {
+			    	$.ajax({
+						url: '/inspections/session/viz/highcharts/sensor/info/singular',
+						data: {
+							connectionId: sessionConnectionId,
+							reading_param: name
+						},
+						success: function(dataObject) {
+							vizData(i, selectedDeviceId, name, dataObject, selectedSensorListToInspect.length);
+						}
+					});
+			    });
+				
+				
+			});
+		}
+	}
+	
+	function vizData(index, deviceId, seriesName, dataObject, maxLength) {
+		seriesOptions[index] = {
+                name: seriesName,
+                data: dataObject
+            };
+		
+	    seriesCounter += 1;
+
+        if (seriesCounter === maxLength) {
+            createChart();
+        }
+	    /*
+	     * {
+	            name: selectedSensorToInspect,
+	            // Define the data points. All series have a dummy year
+	            // of 1970/71 in order to be compared on the same x axis. Note
+	            // that in JavaScript, months start at 0 for January, 1 for February etc.
+	            data: dataObject
+	        }
+	     * 
+	     */
+	    
+	}
+</script>
+
+<% content_for :head do %>
+	
+	<%# javascript_include_tag 'highcharts/highcharts' %>
+	<%# javascript_include_tag 'highcharts/modules/exporting' %>
+
+<% end %>

@@ -1,0 +1,43 @@
+<h1>Listing Sessions</h1>
+ 
+ <style>
+  table, td {
+      border: 1px solid black;
+  }
+  
+  table{
+    border-spacing: 10px;
+      border-collapse: separate;
+  }
+  
+  td {
+    padding: 10px;
+  }
+ </style>
+<table>
+  <tr>
+    <th>Session ID</th>
+    <th>Is Active</th>
+    <th>Created At (UTC)</th>
+    <th>Created At (Melbourne)</th>
+    <th>Finished At (UTC)</th>
+    <th>Finished At (Melbourne)</th>
+    <th>Initiated by device ID</th>
+    <th>Actions</th>
+  </tr>
+ 
+<% @allSessions.each do |session| %>
+  <tr>
+    <td><%= session.session_number %></td>
+    <td><%= session.is_active %></td>
+    <td><%= session.created_at %></td>
+    <td><%= session.created_at.in_time_zone('Melbourne') %></td>
+    <td><%= session.finished_at? ? session.finished_at : "-" %></td>
+    <td><%= session.finished_at? ? session.finished_at.in_time_zone('Melbourne') : "-" %></td>
+    <td><%= session.initiated_by_device_id %></td>
+    <td><%= link_to "View", { controller: "portal", action: "connections", id: session.id }, { :data => { :no_turbolink => 'data-no-turbolink' } } %></td>
+  </tr>
+<% end %>
+</table>
+ 
+<br>

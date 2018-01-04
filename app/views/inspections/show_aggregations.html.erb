@@ -1,0 +1,294 @@
+<style>
+ 	table, td {
+    	border: 1px solid black;
+	}
+	
+	table{
+		border-spacing: 10px;
+    	border-collapse: separate;
+	}
+	
+	td {
+		padding: 10px;
+	}
+	
+	.aggregate-toolbox {
+		padding: 10px; 
+		border: 1px solid #000;
+		margin: 30px;
+	}
+ </style>
+
+<%= link_to("Back", { controller: "inspections", action: "connections", id: @sessionId },
+            { :class=>"btn btn-md btn-info", :data => { :no_turbolink => 'data-no-turbolink' } }) %>
+<%= label_tag(nil, "This session has OBDLink data", { :class=>"label label-md label-warning" }) if @hasObd %>
+
+<h1>Session: <%= @sessionNumber %></h1>
+<h2>
+	Task Type: 
+	<% case @task_type 
+	   when 1 %>
+		Straight line braking
+	<% when 2 %>
+		Swerve &amp; braking to a full stop
+	<% when 3 %>
+		Slalom
+	<% when 4 %>
+		Brake(discretionary), turn, recover
+	<% when 5 %>
+		Acceleration and brake
+	<% end %>
+</h2>
+
+<h1>Please select aggregation between the sensor infos and the survey</h1>
+<div class="aggregate-toolbox">
+<%= form_tag inspections_session_aggregate_path, :method => :post do %>
+  Sensor Info Dataset: <%= select_tag 'sensor_info_id', options_for_select(@sessionInfos) %>
+  <br/>
+  Survey Dataset: <%= select_tag 'survey_id', options_for_select(@surveys) %>
+  <br/>
+  <%= submit_tag "Aggregate" %>
+  
+  <br/>
+  <div style="margin-top: 10px;">
+  	<select class="option-sensor multiselect" multiple="multiple" >
+		<option value="accelerometer_acceleration_x">accelerometer_acceleration_x</option>
+		<option value="accelerometer_acceleration_y">accelerometer_acceleration_y</option>
+		<option value="accelerometer_acceleration_z">accelerometer_acceleration_z</option>
+		<option value="motion_gravity_x">motion_gravity_x</option>
+		<option value="motion_gravity_y">motion_gravity_y</option>
+		<option value="motion_gravity_z">motion_gravity_z</option>
+		<option value="motion_user_acceleration_x">motion_user_acceleration_x</option>
+		<option value="motion_user_acceleration_y">motion_user_acceleration_y</option>
+		<option value="motion_user_acceleration_z">motion_user_acceleration_z</option>
+		<option value="motion_attitude_yaw">motion_attitude_yaw</option>
+		<option value="motion_attitude_pitch">motion_attitude_pitch</option>
+		<option value="motion_attitude_roll">motion_attitude_roll</option>
+		<option value="gyroscope_rotationrate_x">gyroscope_rotationrate_x</option>
+		<option value="gyroscope_rotationrate_y">gyroscope_rotationrate_y</option>
+		<option value="gyroscope_rotationrate_z">gyroscope_rotationrate_z</option>
+		<option value="motion_rotationrate_x">motion_rotationrate_x</option>
+		<option value="motion_rotationrate_y">motion_rotationrate_y</option>
+		<option value="motion_rotationrate_z">motion_rotationrate_z</option>
+		<option value="magnetic_heading_x">magnetic_heading_x</option>
+		<option value="magnetic_heading_y">magnetic_heading_y</option>
+		<option value="magnetic_heading_z">magnetic_heading_z</option>
+		<option value="calibrated_magnetic_field_x">calibrated_magnetic_field_x</option>
+		<option value="calibrated_magnetic_field_y">calibrated_magnetic_field_y</option>
+		<option value="calibrated_magnetic_field_z">calibrated_magnetic_field_z</option>
+		<option value="calibrated_magnetic_field_accuracy">calibrated_magnetic_field_accuracy</option>
+		<option value="magnetometer_x">magnetometer_x</option>
+		<option value="magnetometer_y">magnetometer_y</option>
+		<option value="magnetometer_z">magnetometer_z</option>
+		<option value="gps_speed">gps_speed</option>
+	  </select>
+	  <input type="button" class="btn btn-success btn-xs viz-btn" value="Visualize"/>
+  </div>
+  
+<% end %>
+</div>
+
+<table>
+  <tr>
+    <th>Device ID</th>
+    <th>Device Type</th>
+    <th>Is Active</th>
+    <th>Connected At (UTC)</th>
+    <th>Connected At (Melbourne)</th>
+    <th>Sensors</th>
+    <th>Surveys</th>
+  </tr>
+ 
+<% @sessionConnections.each do |sessionConnection| %>
+  <tr>
+    <td><%= sessionConnection.device_id %></td>
+    <td>
+    	<% case sessionConnection.device_type 
+		   when 1 %>
+    		iOS
+    	<% when 2 %>
+    		Android
+    	<% end %>
+	</td>
+    <td><%= sessionConnection.is_active %></td>
+    <td><%= sessionConnection.connected_at %></td>
+    <td><%= sessionConnection.connected_at.in_time_zone('Melbourne') %></td>
+    <td><%= sessionConnection.session_sensor_infos.exists? ? 'Yes' : 'No' %></td>
+    <td><%= sessionConnection.session_surveys.exists? ? 'Yes' : 'No' %></td>
+  </tr>
+<% end %>
+</table>
+
+<br/>
+
+<div id="vizContainer" style="padding: 50px;"></div>
+
+<script type="application/javascript">
+	var onDocReady = function(){
+		if(!window.Highcharts){
+			jQuery.getScript("/assets/highstock/highstock.js", function(data, status, jqxhr) {
+				Highcharts.setOptions({
+					global: {
+						useUTC: false
+					}
+				});
+				initUI();
+				
+				$('.option-sensor').multiselect({
+		            nonSelectedText: 'Sensor Types',
+		            nSelectedText: 'Sensor Types'
+		        });
+			});
+			
+			jQuery.getScript("/assets/highstock/modules/exporting", function(data, status, jqxhr) {
+	
+			});
+		}
+		
+		initUI();
+	};
+		
+	initUI();
+	$(document).ready(onDocReady);
+	$(document).on('page:load', onDocReady);
+	
+	var seriesOptions = [];
+	var seriesCounter = 0;
+	var createChart;
+	
+	function initUI() {
+		if(window.Highcharts) {
+			$('.viz-btn').unbind();
+			$('.viz-btn').on('click', function() {
+				var sessionConnectionId = $('#sensor_info_id').val();
+				var labelConnectionId = $('#survey_id').val();
+				
+				var selectedSensorsToInspect = $('.option-sensor option:selected', $(this).parent());
+				if(selectedSensorsToInspect.length == 0) {
+					alert('Please select sensor type to visualize');
+					return;
+				}
+				
+				var selectedSensorListToInspect = [];
+				for(var i = 0; i < selectedSensorsToInspect.length; i++) {
+					selectedSensorListToInspect.push($(selectedSensorsToInspect[i]).val());
+				}
+				
+				var selectedDeviceId = $('#sensor_info_id').text();
+				seriesOptions = [];
+				
+				createChart = function() {
+					var funcCharting = function() {
+						$('#vizContainer').highcharts('StockChart', {
+					        chart: {
+					            type: 'spline',
+					            zoomType: 'x'
+					        },
+					        title: {
+					            text: 'Sensor Reading for Device ID: ' + selectedDeviceId
+					        },
+					        subtitle: {
+					            text: selectedSensorListToInspect
+					        },
+					        xAxis: {
+					            type: 'datetime',
+					            dateTimeLabelFormats: { // don't display the dummy year
+					                month: '%e. %b',
+					                year: '%b'
+					            },
+					            title: {
+					                text: 'Timestamp'
+					            }
+					        },
+					        yAxis: {
+					            title: {
+					                text: "Sensor reading"
+					            }
+					        },
+					        tooltip: {
+					            pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b><br/>'
+					        },
+					        plotOptions: {
+					        	area: {
+					        		turboThreshold: 50000
+					        	}
+					        },
+					
+					        series: seriesOptions
+					    });
+					}
+					
+					
+					if(labelConnectionId == undefined || labelConnectionId == null || labelConnectionId == '') {
+						funcCharting();
+					}
+					else {
+						$.ajax({
+							url: '/inspections/session/viz/highcharts/sensor/survey/aggregate',
+							data: {
+								connectionId: sessionConnectionId,
+								labelId: labelConnectionId,
+							},
+							success: function(dataObject) {
+								if (dataObject.length > 0) {
+									seriesOptions.push({
+										name: 'Event',
+										type: 'flags',
+										data: dataObject,
+										shape : 'circlepin',
+                						width : 16,
+                						tooltip: {
+								            pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.text}</b><br/>'
+								        }
+									});
+								}
+								
+								funcCharting();
+							}
+						});
+					}
+				};
+			    
+			    seriesCounter = 0;
+			    $.each(selectedSensorListToInspect, function (i, name) {
+			    	$.ajax({
+						url: '/inspections/session/viz/highcharts/sensor/info/singular',
+						data: {
+							connectionId: sessionConnectionId,
+							reading_param: name
+						},
+						success: function(dataObject) {
+							vizData(i, selectedDeviceId, name, dataObject, selectedSensorListToInspect.length);
+						}
+					});
+			    });
+				
+				
+			});
+		}
+	}
+	
+	function vizData(index, deviceId, seriesName, dataObject, maxLength) {
+		seriesOptions[index] = {
+                name: seriesName,
+                data: dataObject
+            };
+		
+	    seriesCounter += 1;
+
+        if (seriesCounter === maxLength) {
+            createChart();
+        }
+	    /*
+	     * {
+	            name: selectedSensorToInspect,
+	            // Define the data points. All series have a dummy year
+	            // of 1970/71 in order to be compared on the same x axis. Note
+	            // that in JavaScript, months start at 0 for January, 1 for February etc.
+	            data: dataObject
+	        }
+	     * 
+	     */
+	    
+	}
+</script>
