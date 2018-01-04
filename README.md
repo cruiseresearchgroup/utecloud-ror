@@ -43,8 +43,10 @@ to turn off async process, do the following:
 #bin/delayed_job stop
 ```
 default username and password for admin portal: 
+```
 username: admin
 password: admin
+```
 
 * ...
 
