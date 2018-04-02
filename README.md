@@ -6,9 +6,8 @@ Ubiquitous data Exploration (UTE) is a mobile sensor data collection, annotation
 
 This repository is dedicated to Cloud-UTE, the backend-app component of UTE platform. 
 
-For iOS client (mobiute-ios), please refer to this repository: [Mobi-UTE](https://github.com/cruiseresearchgroup/mobiute-ios). 
-
-For Android client (mobiute-android), please refer to this repository: [Mobi-UTE](https://github.com/cruiseresearchgroup/mobiute-android). 
+> **For iOS client, please refer to this repository: [Mobi-UTE iOS](https://github.com/cruiseresearchgroup/mobiute-ios).**  
+**For Android client, please refer to this repository: [Mobi-UTE Android](https://github.com/cruiseresearchgroup/mobiute-android).** 
 
 Please refer to our following paper for the details of UTE: http://ieeexplore.ieee.org/document/7517818/ 
 
